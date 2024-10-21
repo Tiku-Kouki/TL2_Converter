@@ -5,6 +5,8 @@ void TextureConverter::ConvertTextureWICToDDS(const std::string& filePath)
 	// テクスチャファイルを読み込む
 	LoadWICTextureFromFile(filePath);
 
+	   HRESULT result = LoadWICTextureFromFile(wFilePath.c_str(),)
+
 }
 
 TextureConverter::~TextureConverter()
