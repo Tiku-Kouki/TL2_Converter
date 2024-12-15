@@ -28,17 +28,18 @@ int main(int argc,char* argv[]) {
 
 	assert(argc >= NumArgument);
 
-	// COM
+	// COM ライブラリの初期化
 
 	HRESULT	 hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
 
 	assert(SUCCEEDED(hr));
 
-
+	 //　テクスチャコンバータ変換
 	TextureConverter converter;
-
+	//　テクスチャ変換
 	converter.ConvertTextureWICToDDS(argv[kFilePath]);
 
+	// Comライブラリの終了
 	CoUninitialize();
 
 

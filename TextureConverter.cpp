@@ -5,7 +5,7 @@ void TextureConverter::ConvertTextureWICToDDS(const std::string& filePath)
 {
 	// テクスチャファイルを読み込む
 	LoadWICTextureFromFile(filePath);
-
+	//DDS形式にして書き出す
 	SaveDDSTextureToFile();
 
 }
@@ -20,6 +20,7 @@ TextureConverter::~TextureConverter()
 
 void TextureConverter::LoadWICTextureFromFile(const std::string& filePath)
 {
+	// ファイルパスを	ワイド文字列に変換
 	std::wstring wfilePath = ConvertMultiByteStringToWideString(filePath);
 
 	HRESULT result = LoadFromWICFile(wfilePath.c_str(), WIC_FLAGS_NONE, &metadata_, scratchImage_);
@@ -34,6 +35,7 @@ void TextureConverter::LoadWICTextureFromFile(const std::string& filePath)
 
 std::wstring TextureConverter::ConvertMultiByteStringToWideString(const std::string& mString)
 {
+	// ワイド文字列に変換した際の文字列を計算
 	int filePathBufferSize = MultiByteToWideChar(CP_ACP, 0, mString.c_str(), -1, nullptr, 0);
 
 	// ワイド文字列
@@ -103,10 +105,43 @@ void TextureConverter::SeparateFilePath(const std::wstring& filePath)
 
 void TextureConverter::SaveDDSTextureToFile()
 {
+	HRESULT result;
+
+	//ミニマップの作成
+	ScratchImage mipChain;
+	result = GenerateMipMaps(
+		scratchImage_.GetImages(), scratchImage_.GetImageCount(),
+		scratchImage_.GetMetadata(),
+		TEX_FILTER_SRGB, 0, mipChain);
+
+	if (SUCCEEDED(result)) {
+
+		//イメージとメタデータを、ミップマップ版に書き換える
+		scratchImage_ = std::move(mipChain);
+		metadata_ = scratchImage_.GetMetadata();
+
+	}
+
+
+	//ミニマップの作成
+	ScratchImage converted;
+	result = Compress(
+		scratchImage_.GetImages(), scratchImage_.GetImageCount(),metadata_,
+		DXGI_FORMAT_BC7_UNORM_SRGB,TEX_COMPRESS_BC7_QUICK | TEX_COMPRESS_SRGB_OUT|
+		TEX_COMPRESS_PARALLEL,1.0f,converted);
+
+	if (SUCCEEDED(result)) {
+		scratchImage_ = std::move(converted);
+		metadata_ = scratchImage_.GetMetadata();
+
+	}
+
+
+
 	// 読み込んだテクスチャをSRGBとして使う
 	metadata_.format = MakeSRGB(metadata_.format);
 
-	HRESULT result;
+	
 
 	std::wstring filePath = directoryPath_ + fileName_ + L".dds";
 
